@@ -426,6 +426,7 @@ solver: 'cplex'
 cplex_threads: 4
 cplex_random_seed: 12345
 cbc_random_seed: 12345
+solver_timeout_hours: 4
 iteration_time: 20000
 gurobi_threads: 3
 gurobi_seed: 12345
@@ -437,7 +438,8 @@ gurobi_seed: 12345
 | `cplex_threads` | Number of threads for CPLEX |
 | `cplex_random_seed` | Random seed for CPLEX reproducibility |
 | `cbc_random_seed` | Random seed for CBC |
-| `iteration_time` | Time limit for CBC in seconds |
+| `solver_timeout_hours` | Hard wall-clock limit per solve, in hours, for every solver. The solver is stopped and the scenario fails with `SolverTimeoutError`. Blank or 0 = no limit |
+| `iteration_time` | CBC's own time limit in seconds (not honoured during the LP solve; capped by `solver_timeout_hours`) |
 | `gurobi_threads` | Number of threads for Gurobi |
 | `gurobi_seed` | Random seed for Gurobi |
 

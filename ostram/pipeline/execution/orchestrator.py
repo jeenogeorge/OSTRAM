@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import os
 import shutil
+import subprocess
 import time
 import traceback
 from dataclasses import dataclass
@@ -784,17 +785,58 @@ def run_matrix_preparation(
     )
 
 
+class SolverTimeoutError(RuntimeError):
+    """The solver ran past the wall-clock limit and was stopped."""
+
+
+def solver_timeout_seconds(params: dict[str, Any]) -> float | None:
+    """Wall-clock solver limit from ``solver_timeout_hours``; ``None`` = no limit.
+
+    Blank, missing, zero or negative values mean no limit, so older configs
+    keep their behaviour.  Any front end (YAML config, an Excel interface)
+    sets the limit by putting ``solver_timeout_hours`` into ``params``.
+    """
+
+    value = params.get("solver_timeout_hours")
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return None
+    try:
+        hours = float(value)
+    except (TypeError, ValueError) as error:
+        raise ValueError(
+            f"solver_timeout_hours must be a number of hours, got {value!r}"
+        ) from error
+    if hours <= 0:
+        return None
+    return hours * 3600.0
+
+
 def invoke_solver_command(
     command: list[str],
     process_runner: Callable[..., Any],
+    timeout_s: float | None = None,
 ) -> None:
-    """The named external solver invocation boundary."""
+    """The named external solver invocation boundary.
 
-    process_runner(
-        command,
-        cwd=str(resolve_paths().stage_workspace("execution", create=True)),
-        check=True,
-    )
+    ``timeout_s`` is a hard wall-clock limit enforced from Python, so it holds
+    for every solver and every solve phase (CBC's own ``-seconds`` is not
+    honoured during the LP solve).  On expiry the solver process is killed and
+    :class:`SolverTimeoutError` is raised.
+    """
+
+    try:
+        process_runner(
+            command,
+            cwd=str(resolve_paths().stage_workspace("execution", create=True)),
+            check=True,
+            timeout=timeout_s,
+        )
+    except subprocess.TimeoutExpired as error:
+        hours = (timeout_s or 0) / 3600.0
+        raise SolverTimeoutError(
+            f"solver {command[0]!r} did not finish within {hours:g} h "
+            f"(solver_timeout_hours) and was stopped"
+        ) from error
 
 
 def validate_cbc_solution(solution_file: str | os.PathLike[str]) -> str:
@@ -871,13 +913,17 @@ class SolverAdapter:
                 self.dependencies.remove_file(solution_file)
             self.dependencies.check_environment("cbc")
             cbc_random_seed = params.get("cbc_random_seed", 12345)
+            cbc_seconds = params["iteration_time"]
+            timeout_s = solver_timeout_seconds(params)
+            if timeout_s is not None:
+                cbc_seconds = min(float(cbc_seconds), timeout_s)
             return [
                 "cbc", f"{paths.output_file}.lp",
                 "randomSeed", str(cbc_random_seed),
                 "randomCbcSeed", str(cbc_random_seed),
                 "primalTolerance", str(params.get("cbc_primal_tolerance", "1e-8")),
                 "dualTolerance", "1e-8",
-                "-seconds", str(params["iteration_time"]),
+                "-seconds", str(int(cbc_seconds)),
                 "solve", "-solu", f"{paths.output_file}.sol",
             ]
 
@@ -927,10 +973,10 @@ class SolverAdapter:
 
         return None
 
-    def invoke(self, command: list[str]) -> None:
+    def invoke(self, command: list[str], timeout_s: float | None = None) -> None:
         """Run a solver command through ``invoke_solver_command``."""
 
-        invoke_solver_command(command, self.dependencies.run_process)
+        invoke_solver_command(command, self.dependencies.run_process, timeout_s)
 
 
 def run_scenario_output_stage(
@@ -1098,7 +1144,9 @@ def execute_scenario(
             active_matrix_runner = matrix_runner or run_matrix_preparation
             active_matrix_runner(matrix_command, dependencies.run_process)
         if solver_command is not None:
-            active_solver_adapter.invoke(solver_command)
+            active_solver_adapter.invoke(
+                solver_command, solver_timeout_seconds(params)
+            )
 
     if (
         params["execute_model"]

@@ -37,7 +37,12 @@ base_scenario: 'BAU'
 ########################################################################################
 solver: 'cbc' # Could you use: 'glpk', 'cbc', 'cplex' and 'gurobi'
 
-# For CBC use
+# Hard wall-clock limit per scenario solve, in hours, for every solver.
+# On expiry the solver is stopped and the scenario fails with SolverTimeoutError.
+# Blank or 0 = no limit. An Excel interface may override it (Setup > Solver_Timeout_Hours).
+solver_timeout_hours: 4
+
+# For CBC use (CBC's own limit; capped by solver_timeout_hours when that is set)
 iteration_time: 20000
 cbc_random_seed: 12345        # Random seed for reproducibility
 # The reduced storage LP needs tighter primal cleanup to avoid CBC's '**'

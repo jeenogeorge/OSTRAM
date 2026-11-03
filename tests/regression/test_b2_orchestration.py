@@ -611,7 +611,12 @@ class B2AstBoundaryCharacterizationTests(unittest.TestCase):
                 item for item in ast.walk(boundary) if isinstance(item, ast.Call)
             )
             keyword_names = [keyword.arg for keyword in process_call.keywords]
-            self.assertEqual(keyword_names, ["cwd", "check"])
+            expected = (
+                ["cwd", "check", "timeout"]
+                if name == "invoke_solver_command"
+                else ["cwd", "check"]
+            )
+            self.assertEqual(keyword_names, expected)
             self.assertIsInstance(process_call.keywords[0].value, ast.Call)
             self.assertIs(process_call.keywords[1].value.value, True)
 
