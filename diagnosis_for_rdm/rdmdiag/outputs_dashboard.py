@@ -372,7 +372,7 @@ def build_payload(data: RunData) -> dict:
 
     unsolved = [f for f in data.futures if data.status_of(f) != SOLVED]
     meta = {
-        "run": data.ref.label, "named": B.named, "samples": B.samples,
+        "run": data.ref.label, "base": _base_scenario(data), "named": B.named, "samples": B.samples,
         "names": {n: _future_name(data, n) for n in B.named},
         "ref": B.named[0] if B.named else "", "years": [B.years[0], B.years[-1]] if B.years else [],
         "solved": len(set(df.Future_ID)), "unsolved": unsolved,
@@ -380,6 +380,12 @@ def build_payload(data: RunData) -> dict:
         "generated": pd.Timestamp.now().strftime("%d %b %Y %H:%M"),
     }
     return {"meta": meta, "tabs": tabs, "figs": figs}
+
+
+def _base_scenario(data: RunData) -> str:
+    """The OSTRAM scenario the futures were built on (manifest, else the workbook's Setup sheet)."""
+    base = data.manifest.get("base_scenario") or data.interface.settings.get("Base_Scenario")
+    return "" if base is None or str(base).strip() in ("", "nan") else str(base).strip()
 
 
 def _future_name(data: RunData, named: str) -> str:
@@ -404,7 +410,9 @@ def build_outputs_dashboard(data: RunData, path: Path) -> Path | None:
     if payload["meta"].get("empty"):
         return None
     js = json.dumps(payload, allow_nan=False, default=lambda o: None).replace("</", "<\\/")
-    page = (TEMPLATE.replace("__TITLE__", html.escape(f"RDM results · {data.ref.label}"))
+    base = payload["meta"]["base"]
+    title = f"RDM results · {data.ref.label}" + (f" · base {base}" if base else "")
+    page = (TEMPLATE.replace("__TITLE__", html.escape(title))
             .replace("__PLOTLY__", _plotly_script()) + "const D = " + js + ";\n" + SCRIPT)
     path.write_text(page, encoding="utf-8")
     return path
@@ -469,7 +477,8 @@ const M=D.meta, FIGS=D.figs, TABS=D.tabs, NAMED=M.named;
 const STRPAL=["#13334f","#c0392b","#2a6f97","#c9a227","#5a8f69","#8e6f9c","#c97f4a","#4aa0b9"];
 const col=n=>STRPAL[NAMED.indexOf(n)%STRPAL.length];
 const lab=n=>M.names[n]||n;
-document.getElementById("title").textContent="OSTRAM RDM results — "+M.run;
+document.getElementById("title").textContent="OSTRAM RDM results — "+M.run+
+  (M.base?" · base scenario: "+M.base:"");
 const nSamp=Math.max(0,...Object.values(M.samples).map(a=>a.filter(s=>s>0).length));
 document.getElementById("subtitle").textContent=NAMED.length+" named future(s) · "+M.solved+
   " solved future(s) · "+(M.years.length?M.years[0]+"–"+M.years[1]:"")+" · built "+M.generated;
