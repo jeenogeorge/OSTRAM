@@ -82,19 +82,40 @@ python -m ostram --setup unescap_training rdm generate --interface Interface_OST
 python -m ostram --setup unescap_training rdm run --interface Interface_OSTRAM_RDM.xlsx --overwrite
 ```
 
-The workbook has these sheets:
+### How the interface workbook is set up
 
-| Sheet | What you fill in |
+In a classic OSeMOSYS RDM run, an uncertainty table is the whole design: you
+list the uncertain parameters and say which scenarios each applies to.
+OSTRAM-RDM keeps that table but puts two layers on top of **one baseline
+scenario**: first, the **named futures** built on it, which include the
+baseline itself; second, the **sampled uncertainty** inside each named
+future.
+
+```
+Base_Scenario (Setup)            e.g. B_Optimised_VRE
+ ├─ F00  Baseline                no changes: the root itself
+ ├─ F01  Delay to 2031           its changes in Future_Changes
+ └─ F02  High demand             its changes in Future_Changes
+       └─ F02_s001 … F02_sN      Uncertainty_Table values sampled on top
+```
+
+| Sheet | Its role |
 |---|---|
-| `Setup` | `Run_Name`, `Base_Scenario`, `Samples_Per_Future`, `Random_Seed`, `Run_Central_Future`, model years |
-| `Futures` | The named futures (`F00`, `F01` …) and whether each runs |
-| `Future_Changes` | One row per change to a future: target sheet, parameter, technology or fuel, operation (`Multiply`, `Multiply_Ramp`, `Set`, `Copy_From_Tech`), value and years |
-| `Uncertainty_Table` | One row per ranged uncertainty: which futures it applies to, the parameter, `Min_Value`, `Max_Value` and years |
-| `Outputs` | Which input parameters and results go into the RDM CSVs |
+| `Setup` | The run: `Run_Name`, the one `Base_Scenario` every future starts from, how many samples per future (`Samples_Per_Future`), `Random_Seed`, and whether each named future also runs without sampling (`Run_Central_Future`). |
+| `Futures` | **What** the futures are: one row per named future (`F00`, `F01` …) with a name, a description and `Run` = Y/N. A future with no changes is the baseline scenario itself; the template's `F00` is that baseline. A future can be a story such as "coal phase-out delayed to 2031". |
+| `Future_Changes` | **How** each future is implemented: one row per parameter change, for example a cap or a build year shifted for the delay. Each row names the `Future_ID`, the sheet, parameter and technology or fuel, the operation (`Multiply`, `Multiply_Ramp`, `Set`, `Copy_From_Tech`), the value and the years. |
+| `Uncertainty_Table` | What you are **unsure about** in every future, such as costs, fuel prices or demand growth: a `Min_Value`–`Max_Value` range per parameter, and in `Involved_Scenarios` the futures it applies to (`ALL`, or a list of Future_IDs). Columns follow the OSeMOSYS RDM interface. |
+| `Outputs` | Which input parameters and results go into the RDM CSVs. |
 
-With `Samples_Per_Future` = N, each named future that has an uncertainty
-becomes N sampled futures. Sample `s` uses the same draw in every named
+The futures are deliberate choices; the uncertainties are sampled. With
+`Samples_Per_Future` = N, each named future that has an uncertainty becomes N
+sampled futures (`F01_s001` … `F01_sN`), drawn by Latin Hypercube on top of
+that future's own changes. Sample `s` uses the same draw in every named
 future, so `F01_s007` and `F02_s007` differ only by the futures' own changes.
+To compare two baseline scenarios, make one run for each.
+
+The [user guide](docs/OSTRAM_RDM_User_Guide.md#step-42-fill-the-workbook)
+explains every column with a worked example.
 
 Other commands:
 
