@@ -252,7 +252,7 @@ The first time:
 
 ```bat
 git fetch origin
-git switch feat/rdm-futures
+git switch RDM
 ```
 
 Later, to get new changes: `git pull`. Check with:
@@ -262,7 +262,7 @@ git branch
 python -m ostram rdm --help
 ```
 
-`git branch` puts `*` next to `feat/rdm-futures`, and the help lists
+`git branch` puts `*` next to `RDM`, and the help lists
 `template`, `generate`, `run` and `collect`. If `rdm` is an unknown command,
 the environment runs OSTRAM from another folder: `python -c "import ostram;
 print(ostram.__file__)"` shows which; run `pip install -e .` from this clone.
