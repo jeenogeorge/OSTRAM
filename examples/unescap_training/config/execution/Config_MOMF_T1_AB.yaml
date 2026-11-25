@@ -199,3 +199,5 @@ reserve_margin_xlsx_sentinel_values:
 #
 # Alternative B: explicitly set PWRBCK reserve credit to zero.
 # reserve_margin_xlsx_backstop_credit: 0
+# *****if any scenario or future Stopped on difficulties then swtich to the simplex method*****
+# rdm_cbc_simplex: dual

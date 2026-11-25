@@ -43,7 +43,7 @@ from pathlib import Path
 CONFIG = {
     # Which run. None = ask (lists every run found, newest first).
     # "test 01", "test_01" and "test01" all find the folder test01.
-    "run": None,
+    "run": "bgd_indea_B",
     # Only needed when two setups have a run of the same name, e.g. "unescap_training".
     "setup": None,
     # The OSTRAM workspace. None = OSTRAM_WORKSPACE if set, else <this clone>/workspace.

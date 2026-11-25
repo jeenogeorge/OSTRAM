@@ -7,12 +7,14 @@ RDM_Outputs.csv and opens it. It is the "results_dashboard" step of
 run_diagnosis.py on its own.
 
 Spyder: set RUN below (e.g. "test01") and press F5. None = ask.
+# %%
 Prompt:  python diagnosis_for_rdm/build_results_dashboard.py --run test01
+
 """
 
 import sys
 
-RUN = None          # e.g. "test01"
+RUN = "bgd_indea_B"          # e.g. "test01"
 SETUP = None        # only if two setups have a run of that name
 WORKSPACE = None    # None = OSTRAM_WORKSPACE, else <this clone>/workspace
 
