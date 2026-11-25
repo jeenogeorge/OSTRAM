@@ -1,0 +1,31 @@
+{
+  "title": "OSTRAM-RDM: Robust Decision Making extension of OSTRAM",
+  "upload_type": "software",
+  "description": "OSTRAM-RDM is a contribution to OSTRAM (OSeMOSYS for Transmission) by the Climate Lead Group. It adds Robust Decision Making: futures are defined in one Excel interface, with one baseline scenario, named futures built on it, and ranged uncertainties sampled by Latin Hypercube inside each named future. It builds, solves and collects every future, writes RDM experiment-design, input and output CSVs, and includes diagnosis tools and HTML dashboards.",
+  "creators": [
+    {
+      "name": "Climate Lead Group"
+    },
+    {
+      "name": "George, Jeeno Soa",
+      "affiliation": "Loughborough University",
+      "orcid": "0000-0003-4521-825X"
+    }
+  ],
+  "license": "Apache-2.0",
+  "keywords": [
+    "OSeMOSYS",
+    "OSTRAM",
+    "Robust Decision Making",
+    "DMDU",
+    "energy system modelling",
+    "transmission"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/Climate-Lead-Group/OSTRAM",
+      "relation": "isDerivedFrom",
+      "resource_type": "software"
+    }
+  ]
+}
